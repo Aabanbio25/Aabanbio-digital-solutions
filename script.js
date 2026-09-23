@@ -11,9 +11,9 @@ if(form) form.addEventListener('submit',async e=>{
  button.disabled=true; button.textContent='Sending...';
  const data=new FormData(form);
  const payload={name:String(data.get('name')).trim(),phone:String(data.get('phone')).trim(),email:String(data.get('email')).trim(),service:String(data.get('service')).trim(),budget:String(data.get('budget')||'').trim()||null,details:String(data.get('details')).trim()};
- const {error}=await supabaseClient.from('project_requests').insert(payload);
+ const {data:created,error}=await supabaseClient.from('project_requests').insert(payload).select('tracking_token').single();
  if(error){message.textContent='Sorry, your request could not be sent. Please use WhatsApp or email below.';button.disabled=false;button.textContent='Send Project Request';return;}
- message.textContent='✓ Request received. I will contact you soon.';
+ message.innerHTML=created?.tracking_token?'✓ Request received. Save your tracking code: <strong>'+created.tracking_token+'</strong>':'✓ Request received. I will contact you soon.';
  form.reset(); button.disabled=false; button.textContent='Send Project Request';
 });
 
