@@ -39,3 +39,22 @@ if(trackForm) trackForm.addEventListener('submit',async e=>{
  }catch(err){m.textContent=err.message}
  finally{b.disabled=false;b.textContent='Check Request'}
 });
+
+const paymentForm=document.getElementById('paymentForm');
+if(paymentForm) paymentForm.addEventListener('submit',async e=>{
+ e.preventDefault();
+ const b=paymentForm.querySelector('button'),m=document.getElementById('paymentMessage');
+ b.disabled=true;b.textContent='Starting secure checkout...';m.textContent='';
+ const token=document.getElementById('paymentToken').value.trim();
+ const phone=document.getElementById('paymentPhone').value.trim();
+ const amount=Number(document.getElementById('paymentAmount').value);
+ try{
+   const res=await fetch(SUPABASE_URL+'/functions/v1/initialize-paystack-payment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,phone,amount})});
+   const out=await res.json();
+   if(!res.ok) throw new Error(out.error||'Unable to start payment.');
+   window.location.href=out.authorization_url;
+ }catch(err){
+   m.textContent=err.message;
+   b.disabled=false;b.textContent='Continue to Payment';
+ }
+});
