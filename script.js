@@ -6,6 +6,33 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;
 
 document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{const target=document.querySelector(a.getAttribute('href'));if(target){e.preventDefault();target.scrollIntoView({behavior:'smooth'});}}));
 
+const paymentMessage=document.getElementById('paymentMessage');
+const paymentParams=new URLSearchParams(window.location.search);
+const paymentReference=paymentParams.get('reference');
+
+if(paymentReference){
+  if(paymentMessage){
+    paymentMessage.textContent='Verifying your payment securely...';
+  }
+  fetch(SUPABASE_URL+'/functions/v1/verify-paystack-payment?reference='+encodeURIComponent(paymentReference))
+    .then(async res=>{
+      const out=await res.json();
+      if(!res.ok) throw new Error(out.error||'Unable to verify payment.');
+      if(paymentMessage){
+        paymentMessage.textContent=out.paid
+          ? '✓ Payment confirmed successfully. Reference: '+out.reference
+          : 'Payment status: '+out.status+'. If you completed the payment, please contact us with your reference.';
+      }
+    })
+    .catch(err=>{
+      if(paymentMessage) paymentMessage.textContent=err.message;
+    })
+    .finally(()=>{
+      const cleanUrl=window.location.origin+window.location.pathname+'?payment=complete';
+      window.history.replaceState({},document.title,cleanUrl);
+    });
+}
+
 const form=document.getElementById('projectForm');
 if(form) form.addEventListener('submit',async e=>{
  e.preventDefault();
